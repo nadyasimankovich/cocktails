@@ -1,8 +1,9 @@
-import io.circe.Decoder
-import io.circe._, io.circe.generic.semiauto._
+package core
+
+import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
+import io.circe.{Decoder, Encoder}
 
 object Models {
-  case class CocktailImage(name: String, recipe: String, image: Array[Byte])
   case class CocktailInfo(name: String, recipe: String, link: String)
   case class Drink(strDrink: String, strInstructions: String, strDrinkThumb: String)
   case class Result(drinks: Seq[Drink])

@@ -1,8 +1,11 @@
-import Models._
+package cocktail
+
 import com.twitter.finagle.http.Request
 import com.twitter.io.Buf
 import com.twitter.util.Future
-import io.circe.parser._
+import core.HttpsClient
+import core.Models.Result
+import io.circe.parser.decode
 
 // https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
 object CocktailDbClient {
@@ -13,7 +16,10 @@ object CocktailDbClient {
       .sendGet(Request("/api/json/v1/1/search.php", ("s", query)))
       .map { result =>
         println(result)
-        decode[Result](result.contentString).right.get
+        decode[Result](result.contentString) match {
+          case Right(value) => value
+          case Left(ex) => throw ex
+        }
       }
   }
 
@@ -27,4 +33,3 @@ object CocktailDbClient {
       }
   }
 }
-

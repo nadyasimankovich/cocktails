@@ -1,13 +1,15 @@
-import Models.CocktailImage
-import com.datastax.driver.core.{Cluster, Session}
+package db
+
 import java.nio.ByteBuffer
+
+import com.datastax.driver.core.{Cluster, Session}
 
 class CassandraConnector {
   private val cluster: Cluster = Cluster.builder
     .addContactPoint("127.0.0.1")
     .build
 
-  val session: Session = cluster.connect("cocktails")
+  private[db] val session: Session = cluster.connect("cocktails")
 }
 
 object CassandraConnector extends CassandraConnector {

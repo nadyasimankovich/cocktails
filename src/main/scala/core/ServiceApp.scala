@@ -1,3 +1,5 @@
+package core
+
 import com.twitter.finagle.http.Request
 import com.twitter.finatra.http.request.ContentType
 import com.twitter.finatra.http.routing.HttpRouter

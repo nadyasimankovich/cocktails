@@ -1,5 +1,7 @@
+package core
+
+import com.twitter.finagle.http.{Request, Response}
 import com.twitter.finagle.{Http, Service}
-import com.twitter.finagle.http.{Request, RequestBuilder, Response}
 import com.twitter.util.Future
 
 class HttpsClient(host: String) {

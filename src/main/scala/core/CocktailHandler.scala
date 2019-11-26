@@ -1,7 +1,11 @@
+package core
+
+import cocktail.CocktailDbClient
 import com.twitter.util.Future
+import core.Models._
+import db.{CassandraConnector, CocktailImage}
 import io.circe.generic.auto._
 import io.circe.syntax._
-import Models._
 
 class CocktailHandler {
   def search(query: String): Future[String] = {

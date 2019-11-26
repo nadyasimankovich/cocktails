@@ -4,6 +4,8 @@ name := "cocktails"
 
 version := "1.0"
 
+scalaVersion := "2.12.8"
+
 val circeVersion = "0.11.1"
 val finagleVersion = "19.11.0"
 //val doobieVersion = "0.8.4"
