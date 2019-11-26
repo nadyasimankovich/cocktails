@@ -7,7 +7,7 @@ import db.{CassandraConnector, CocktailImage}
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-class CocktailHandler {
+class CocktailHandler(cassandraConnector: CassandraConnector) {
   def search(query: String): Future[String] = {
     for {
       result <- CocktailDbClient.search(query)
@@ -17,7 +17,7 @@ class CocktailHandler {
     } yield {
       val response = MyResult(
         drinks = result.drinks.zip(images).map { case (drink, image) =>
-          CassandraConnector.insert(CocktailImage(
+          cassandraConnector.insert(CocktailImage(
             name = drink.strDrink.toLowerCase,
             recipe = drink.strInstructions,
             image = image
@@ -37,7 +37,7 @@ class CocktailHandler {
 
   def getImage(query: String): Future[Array[Byte]] = {
     Future.value {
-      CassandraConnector.get(query) match {
+      cassandraConnector.get(query) match {
         case Some(result) => result.image
         case None => Array.empty
       }

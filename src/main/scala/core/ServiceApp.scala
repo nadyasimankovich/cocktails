@@ -4,6 +4,7 @@ import com.twitter.finagle.http.Request
 import com.twitter.finatra.http.request.ContentType
 import com.twitter.finatra.http.routing.HttpRouter
 import com.twitter.finatra.http.{Controller, HttpServer}
+import db.{CassandraConnector, CocktailImage}
 
 object ServiceApp extends HttpServer {
   override val defaultHttpPort: String = ":8080"
@@ -15,7 +16,12 @@ object ServiceApp extends HttpServer {
 }
 
 class ServiceController extends Controller {
-  val cocktailsHandler = new CocktailHandler
+  private val cassandraConnector = new CassandraConnector with ImageCache {
+    override def get(name: String): Option[CocktailImage] = {
+      cache.get(name, name => super.get(name))
+    }
+  }
+  private val cocktailsHandler = new CocktailHandler(cassandraConnector)
 
   get("/search") { request: Request =>
     cocktailsHandler.search(request.getParam("query")).map { body =>

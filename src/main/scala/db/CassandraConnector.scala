@@ -10,9 +10,6 @@ class CassandraConnector {
     .build
 
   private[db] val session: Session = cluster.connect("cocktails")
-}
-
-object CassandraConnector extends CassandraConnector {
 
   private val insertQuery =
     """
@@ -41,10 +38,8 @@ object CassandraConnector extends CassandraConnector {
   }
 
   def get(name: String): Option[CocktailImage] = {
-    val row = session.execute(
-      getStatement
-        .bind(name)
-    ).one()
+    println(s"CassandraConnector: $name")
+    val row = session.execute(getStatement.bind(name)).one()
 
     if (row == null) None
     else Some(CocktailImage(
