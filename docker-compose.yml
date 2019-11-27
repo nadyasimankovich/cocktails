@@ -1,4 +1,4 @@
-version: '3.7'
+version: "3.7"
 
 networks:
   cocktail-network:
@@ -10,8 +10,9 @@ services:
     container_name: cassandra
     volumes:
       - ./data/cassandra:/var/lib/cassandra
+      - ./src/main/resources/schema.cql:/schema.cql
     ports:
-      - '9042:9042'
+      - "9042:9042"
     networks:
       - cocktail-network
     healthcheck:
@@ -19,16 +20,7 @@ services:
       interval: 60s
       timeout: 10s
       retries: 5
-
-  cqlsh:
-    image: cassandra:latest
-    entrypoint: cqlsh cassandra
-    volumes:
-      - ./src/main/resources/schema.cql:/schema.cql
-    links:
-      - cassandra
-    depends_on:
-      - cassandra
+    #command: /bin/bash -c "echo loading cassandra keyspace && cqlsh cassandra -f /schema.cql"
 
   cocktails:
     image: cocktails:1.0.0
@@ -37,7 +29,30 @@ services:
       - "8080:8080"
     networks:
       - cocktail-network
-    links:
-      - cassandra
     depends_on:
       - cassandra
+
+#  cqlsh:
+#    image: cassandra:latest
+#    container_name: cqlsh
+#    entrypoint: cqlsh cassandra
+#    volumes:
+#      - ./src/main/resources/schema.cql:/schema.cql
+#    links:
+#      - cassandra
+#    depends_on:
+#      - cassandra
+#    networks:
+#      - cocktail-network
+#
+#  cassandra-load-keyspace:
+#    container_name: cassandra-load-keyspace
+#    image: cassandra:latest
+#    depends_on:
+#      - cassandra
+#      - cqlsh
+#    volumes:
+#      - ./src/main/resources/schema.cql:/schema.cql
+#    command: /bin/bash -c "sleep 60 && echo loading cassandra keyspace && cqlsh cassandra -f /schema.cql"
+#    networks:
+#      - cocktail-network
