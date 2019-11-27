@@ -1,0 +1,43 @@
+version: '3.7'
+
+networks:
+  cocktail-network:
+    driver: bridge
+
+services:
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra
+    volumes:
+      - ./data/cassandra:/var/lib/cassandra
+    ports:
+      - '9042:9042'
+    networks:
+      - cocktail-network
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 60s
+      timeout: 10s
+      retries: 5
+
+  cqlsh:
+    image: cassandra:latest
+    entrypoint: cqlsh cassandra
+    volumes:
+      - ./src/main/resources/schema.cql:/schema.cql
+    links:
+      - cassandra
+    depends_on:
+      - cassandra
+
+  cocktails:
+    image: cocktails:1.0.0
+    container_name: cocktails
+    ports:
+      - "8080:8080"
+    networks:
+      - cocktail-network
+    links:
+      - cassandra
+    depends_on:
+      - cassandra
