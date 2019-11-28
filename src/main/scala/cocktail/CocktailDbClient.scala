@@ -9,11 +9,23 @@ import io.circe.parser.decode
 
 // https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
 object CocktailDbClient {
-  val serviceSearch = new HttpsClient("www.thecocktaildb.com")
+  private val serviceSearch = new HttpsClient("www.thecocktaildb.com")
 
   def search(query: String): Future[Result] = {
     serviceSearch
       .sendGet(Request("/api/json/v1/1/search.php", ("s", query)))
+      .map { result =>
+        println(result)
+        decode[Result](result.contentString) match {
+          case Right(value) => value
+          case Left(ex) => throw ex
+        }
+      }
+  }
+
+  def search(firstLetter: Char): Future[Result] = {
+    serviceSearch
+      .sendGet(Request("/api/json/v1/1/search.php", ("l", firstLetter.toString)))
       .map { result =>
         println(result)
         decode[Result](result.contentString) match {
