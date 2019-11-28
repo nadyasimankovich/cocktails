@@ -15,7 +15,6 @@ object CocktailDbClient {
     serviceSearch
       .sendGet(Request("/api/json/v1/1/search.php", ("s", query)))
       .map { result =>
-        println(result)
         decode[Result](result.contentString) match {
           case Right(value) => value
           case Left(ex) => throw ex
@@ -23,24 +22,21 @@ object CocktailDbClient {
       }
   }
 
-  def search(firstLetter: Char): Future[Result] = {
+  def search(firstLetter: Char): Future[Option[Result]] = {
     serviceSearch
-      .sendGet(Request("/api/json/v1/1/search.php", ("l", firstLetter.toString)))
+      .sendGet(Request("/api/json/v1/1/search.php", ("f", firstLetter.toString)))
       .map { result =>
-        println(result)
         decode[Result](result.contentString) match {
-          case Right(value) => value
-          case Left(ex) => throw ex
+          case Right(value) => Some(value)
+          case Left(_) => None
         }
       }
   }
 
   def getImage(name: String): Future[Array[Byte]] = {
-    println(name)
     serviceSearch
       .sendGet(Request(name))
       .map { result =>
-        println(result)
         Buf.ByteArray.Owned.extract(result.content)
       }
   }

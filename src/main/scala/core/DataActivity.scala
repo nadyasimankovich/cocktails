@@ -1,11 +1,13 @@
 package core
 
+import cocktail.CocktailsDataService
+
 class DataActivity(cocktailsDataService: CocktailsDataService) {
 
   def update: Runnable = new Runnable {
     override def run(): Unit = {
       for {
-        images <- cocktailsDataService.getAllImages
+        _ <- cocktailsDataService.reload()
       } yield {
       }
     }

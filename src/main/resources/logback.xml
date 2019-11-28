@@ -6,7 +6,11 @@
         </encoder>
     </appender>
 
-    <root level="info">
+    <logger name="com.datastax.driver.core.QueryLogger.SLOW">
+        <level value="DEBUG"/>
+    </logger>
+
+    <root level="DEBUG">
         <appender-ref ref="console"/>
     </root>
 
