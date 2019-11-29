@@ -25,7 +25,7 @@ class CocktailHandler(cassandraConnector: CassandraConnector) extends FutureHelp
         recipe = drink.strInstructions,
         image = image
       )
-      }, cassandraConnector.upsert)
+      }.toSeq, cassandraConnector.upsert)
     } yield {
       val response = MyResult(
         drinks = images.map { case (drink, _) =>
@@ -34,7 +34,7 @@ class CocktailHandler(cassandraConnector: CassandraConnector) extends FutureHelp
             recipe = drink.strInstructions,
             link = imageLink(drink.strDrink)
           )
-        }
+        }.toSeq
       )
 
       response.asJsonObject.asJson

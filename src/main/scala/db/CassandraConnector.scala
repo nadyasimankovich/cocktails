@@ -7,41 +7,38 @@ import com.datastax.driver.core.{BoundStatement, Cluster, PreparedStatement, Ses
 import com.twitter.util.Future
 import core.FutureUtils._
 
-import scala.concurrent.ExecutionContext
-
 class CassandraConnector() {
   private val cluster: Cluster = Cluster.builder
     .addContactPoint("127.0.0.1")
     .build
 
-  private implicit val executor: Executor = Executors.newFixedThreadPool(1)
-  private implicit val executionContext: ExecutionContext = ExecutionContext.Implicits.global
+  private implicit val executor: Executor = Executors.newFixedThreadPool(10)
 
-  private[db] val session: Future[Session] = cluster.connectAsync("cocktails").asScala.asTwitter
+  private[db] val session: Future[Session] = cluster.connectAsync("cocktails").asScala
 
-  private lazy val insertQuery =
+  private val insertQuery =
     """
       |insert into cocktails.catalog (name, recipe, image, ts)
       |values (?, ? , ?, ?)
       |""".stripMargin
 
-  private lazy val updateQuery =
+  private val updateQuery =
     """
       |update cocktails.catalog
       |set recipe = ?, image = ?, ts = ?
       |where name = ?
       |""".stripMargin
 
-  private lazy val getQuery =
+  private val getQuery =
     """
       |select name, recipe, image, ts
       |from cocktails.catalog
       |where name = ?
       |""".stripMargin
 
-  private lazy val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala.asTwitter)
-  private lazy val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala.asTwitter)
-  private lazy val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala.asTwitter)
+  private val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala)
+  private val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala)
+  private val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala)
 
   def upsert(cocktail: CocktailImage): Future[Unit] = {
     def insert: Future[BoundStatement] = {
@@ -71,7 +68,7 @@ class CassandraConnector() {
     for {
       result <- get(cocktail.name)
       bounded <- if (result.isDefined) update else insert
-      _ <- session.flatMap(_.executeAsync(bounded).asScala.asTwitter)
+      _ <- session.flatMap(_.executeAsync(bounded).asScala)
     } yield ()
   }
 
@@ -80,7 +77,7 @@ class CassandraConnector() {
 
     for {
       statement <- getStatement
-      row <- session.flatMap(_.executeAsync(statement.bind(name)).asScala.asTwitter).map(_.one())
+      row <- session.flatMap(_.executeAsync(statement.bind(name)).asScala).map(_.one())
     } yield {
       if (row == null) None
       else Some(CocktailImage(

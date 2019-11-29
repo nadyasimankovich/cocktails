@@ -17,22 +17,21 @@ class CocktailsDataService(cassandraConnector: CassandraConnector) extends Futur
 
   private def getAllImages(): Future[Seq[CocktailImage]] = {
     for {
-      drinks <- getAllCocktails().map(_.distinct.toSeq)
+      drinks <- getAllCocktails()
       images <- batchTraverse(drinks.map(_.strDrinkThumb), CocktailDbClient.getImage)
     } yield {
-      images.flatMap { case (name, image) =>
-        drinks.find(_.strDrinkThumb.contains(name)).map { drink =>
-          CocktailImage(
-            name = drink.strDrink.toLowerCase,
-            recipe = drink.strInstructions,
-            image = image
-          )
-        }
-      }
+      images.map { case (name, image) =>
+        val drink = drinks.find(_.strDrinkThumb.contains(name)).get
+        CocktailImage(
+          name = drink.strDrink.toLowerCase,
+          recipe = drink.strInstructions,
+          image = image
+        )
+      }.toSeq
     }
   }
 
   private def getAllCocktails(): Future[Seq[Drink]] = {
-    batchTraverse(alphabet, CocktailDbClient.searchByFirstLetter).map(_.map(_._2)).map(_.flatten)
+    batchTraverse(alphabet, CocktailDbClient.searchByFirstLetter).map(_.values.flatten.toSeq.distinct)
   }
 }
