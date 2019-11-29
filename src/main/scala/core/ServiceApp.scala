@@ -7,6 +7,7 @@ import com.twitter.finagle.http.Request
 import com.twitter.finatra.http.request.ContentType
 import com.twitter.finatra.http.routing.HttpRouter
 import com.twitter.finatra.http.{Controller, HttpServer}
+import com.twitter.util.Future
 import db.{CassandraConnector, CocktailImage}
 
 object ServiceApp extends HttpServer {
@@ -21,7 +22,7 @@ object ServiceApp extends HttpServer {
 
 class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends Controller {
   private val cassandraConnector = new CassandraConnector with ImageCache {
-    override def get(name: String): Option[CocktailImage] = {
+    override def get(name: String): Future[Option[CocktailImage]] = {
       cache.get(name, name => super.get(name))
     }
   }
