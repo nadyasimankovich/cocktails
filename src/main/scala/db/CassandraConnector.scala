@@ -1,15 +1,20 @@
 package db
 
 import java.nio.ByteBuffer
+import java.util.concurrent.{Executor, Executors}
 
-import com.datastax.driver.core.{Cluster, Session}
+import com.datastax.driver.core.{BoundStatement, Cluster, PreparedStatement, Session}
+import com.twitter.util.Future
+import core.FutureUtils._
 
-class CassandraConnector {
+class CassandraConnector() {
   private val cluster: Cluster = Cluster.builder
     .addContactPoint("127.0.0.1")
     .build
 
-  private[db] val session: Session = cluster.connect("cocktails")
+  private implicit val executor: Executor = Executors.newFixedThreadPool(10)
+
+  private[db] val session: Future[Session] = cluster.connectAsync("cocktails").asScala
 
   private val insertQuery =
     """
@@ -17,7 +22,7 @@ class CassandraConnector {
       |values (?, ? , ?, ?)
       |""".stripMargin
 
-  private val upsertQuery =
+  private val updateQuery =
     """
       |update cocktails.catalog
       |set recipe = ?, image = ?, ts = ?
@@ -31,40 +36,56 @@ class CassandraConnector {
       |where name = ?
       |""".stripMargin
 
-  private val insertStatement = session.prepare(insertQuery)
-  private val upsertStatement = session.prepare(upsertQuery)
-  private val getStatement = session.prepare(getQuery)
+  private val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala)
+  private val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala)
+  private val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala)
 
-  def upsert(cocktail: CocktailImage): Unit = {
-    val statement = if (get(cocktail.name).isDefined) {
-      upsertStatement
-        .bind()
-        .setString("recipe", cocktail.recipe)
-        .setBytes("image", ByteBuffer.wrap(cocktail.image))
-        .setLong("ts", cocktail.ts)
-        .setString("name", cocktail.name)
-    } else {
-      insertStatement
-        .bind()
-        .setString("name", cocktail.name)
-        .setString("recipe", cocktail.recipe)
-        .setBytes("image", ByteBuffer.wrap(cocktail.image))
-        .setLong("ts", cocktail.ts)
+  def upsert(cocktail: CocktailImage): Future[Unit] = {
+    def insert: Future[BoundStatement] = {
+      for {
+        statement <- insertStatement
+      } yield {
+        statement.bind()
+          .setString("name", cocktail.name)
+          .setString("recipe", cocktail.recipe)
+          .setBytes("image", ByteBuffer.wrap(cocktail.image))
+          .setLong("ts", cocktail.ts)
+      }
     }
 
-    session.execute(statement)
+    def update: Future[BoundStatement] = {
+      for {
+        statement <- updateStatement
+      } yield {
+        statement.bind()
+          .setString("recipe", cocktail.recipe)
+          .setBytes("image", ByteBuffer.wrap(cocktail.image))
+          .setLong("ts", cocktail.ts)
+          .setString("name", cocktail.name)
+      }
+    }
+
+    for {
+      result <- get(cocktail.name)
+      bounded <- if (result.isDefined) update else insert
+      _ <- session.flatMap(_.executeAsync(bounded).asScala)
+    } yield ()
   }
 
-  def get(name: String): Option[CocktailImage] = {
+  def get(name: String): Future[Option[CocktailImage]] = {
     println(s"CassandraConnector: $name")
-    val row = session.execute(getStatement.bind(name)).one()
 
-    if (row == null) None
-    else Some(CocktailImage(
-      name = row.getString("name"),
-      recipe = row.getString("recipe"),
-      image = row.getBytes("image").array(),
-      ts = row.getLong("ts")
-    ))
+    for {
+      statement <- getStatement
+      row <- session.flatMap(_.executeAsync(statement.bind(name)).asScala).map(_.one())
+    } yield {
+      if (row == null) None
+      else Some(CocktailImage(
+        name = row.getString("name"),
+        recipe = row.getString("recipe"),
+        image = row.getBytes("image").array(),
+        ts = row.getLong("ts")
+      ))
+    }
   }
 }

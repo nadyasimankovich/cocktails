@@ -1,31 +1,27 @@
 package cocktail
 
 import com.twitter.util.Future
-import core.Models.Result
+import core.FutureHelper
+import core.Models.Drink
 import db.{CassandraConnector, CocktailImage}
 
-class CocktailsDataService(cassandraConnector: CassandraConnector) {
+class CocktailsDataService(cassandraConnector: CassandraConnector) extends FutureHelper {
   private val alphabet: Seq[Char] = 'a' to 'y'
 
   def reload(): Future[Unit] = {
     for {
       images <- getAllImages()
-      _ <- Future.traverseSequentially(images) { i =>
-        Future.value(cassandraConnector.upsert(i))
-      }
+      _ <- batchTraverse(images, cassandraConnector.upsert)
     } yield ()
   }
 
   private def getAllImages(): Future[Seq[CocktailImage]] = {
     for {
-      result <- getAllCocktails()
-      images <- Future.traverseSequentially(result.flatMap(_.drinks).distinct) { drink =>
-        CocktailDbClient.getImage(drink.strDrinkThumb).map { image =>
-          drink -> image
-        }
-      }
+      drinks <- getAllCocktails()
+      images <- batchTraverse(drinks.map(_.strDrinkThumb), CocktailDbClient.getImage)
     } yield {
-      images.map { case (drink, image) =>
+      images.toSeq.map { case (name, image) =>
+        val drink = drinks.find(_.strDrinkThumb.contains(name)).get
         CocktailImage(
           name = drink.strDrink.toLowerCase,
           recipe = drink.strInstructions,
@@ -35,13 +31,7 @@ class CocktailsDataService(cassandraConnector: CassandraConnector) {
     }
   }
 
-  private def getAllCocktails(): Future[Seq[Result]] = {
-    alphabet.grouped(5).foldLeft(Future.value(Seq.empty[Result])) { case (f, group) =>
-      f.flatMap { res =>
-        Future.traverseSequentially(group) { letter =>
-          CocktailDbClient.search(letter)
-        }.map {_.flatten ++ res}
-      }
-    }
+  private def getAllCocktails(): Future[Seq[Drink]] = {
+    batchTraverse(alphabet, CocktailDbClient.searchByFirstLetter).map(_.values.toSeq.flatten.distinct)
   }
 }
