@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 trait ImageCache {
   val cache: Cache[String, Future[Option[CocktailImage]]] = Scaffeine()
     .recordStats()
-    .expireAfterWrite(10.minutes)
+    .expireAfterWrite(1.hour)
     .maximumSize(10)
     .build[String, Future[Option[CocktailImage]]]()
 }

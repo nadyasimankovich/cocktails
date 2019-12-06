@@ -27,7 +27,7 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
     }
   }
   private val cocktailsHandler = new CocktailHandler(cassandraConnector)
-  scheduledExecutor.schedule(new DataActivity(new CocktailsDataService(cassandraConnector)).update, 1L, TimeUnit.MINUTES)
+  scheduledExecutor.schedule(new DataActivity(new CocktailsDataService(cassandraConnector)).update, 1L, TimeUnit.HOURS)
 
   get("/search") { request: Request =>
     cocktailsHandler.search(request.getParam("query")).map { body =>
