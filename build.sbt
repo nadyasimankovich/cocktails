@@ -9,6 +9,7 @@ scalaVersion := "2.12.10"
 val circeVersion = "0.11.1"
 val finagleVersion = "19.11.0"
 val gatlingVersion = "3.3.1"
+val zioVersion = "1.0.0-RC17"
 
 scalacOptions += "-Ypartial-unification" // 2.11.9+
 
@@ -26,7 +27,9 @@ lazy val cocktails = (project in file("."))
       "io.circe" %% "circe-parser" % circeVersion,
 
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.8.0",
-      "com.github.blemale" %% "scaffeine" % "3.1.0" % "compile"
+      "com.github.blemale" %% "scaffeine" % "3.1.0" % "compile",
+
+      "dev.zio" %% "zio" % zioVersion
     )
   )
   .settings(

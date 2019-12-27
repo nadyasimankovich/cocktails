@@ -8,14 +8,14 @@ import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-class CocktailHandler(cassandraConnector: CassandraConnector) extends FutureHelper {
+class CocktailHandler(cassandraConnector: CassandraConnector, cocktailDbClient: CocktailDbClient) extends FutureHelper {
 
   private def imageLink(name: String) = s"http://localhost:8080/images/${name.toLowerCase}"
 
   def search(query: String): Future[Json] = {
     for {
-      drinks <- CocktailDbClient.search(query).map(_.distinct.toSeq)
-      images <- batchTraverse(drinks.map(_.strDrinkThumb), CocktailDbClient.getImage).map { result =>
+      drinks <- cocktailDbClient.search(query).map(_.distinct.toSeq)
+      images <- batchTraverse(drinks.map(_.strDrinkThumb), cocktailDbClient.getImage).map { result =>
         result.map { case (name, res) =>
           drinks.find(_.strDrinkThumb.contains(name)).get -> res
         }

@@ -5,7 +5,7 @@ import core.FutureHelper
 import core.Models.Drink
 import db.{CassandraConnector, CocktailImage}
 
-class CocktailsDataService(cassandraConnector: CassandraConnector) extends FutureHelper {
+class CocktailsDataService(cassandraConnector: CassandraConnector, cocktailDbClient: CocktailDbClient) extends FutureHelper {
   private val alphabet: Seq[Char] = 'a' to 'y'
 
   def reload(): Future[Unit] = {
@@ -18,7 +18,7 @@ class CocktailsDataService(cassandraConnector: CassandraConnector) extends Futur
   private def getAllImages(): Future[Seq[CocktailImage]] = {
     for {
       drinks <- getAllCocktails()
-      images <- batchTraverse(drinks.map(_.strDrinkThumb), CocktailDbClient.getImage)
+      images <- batchTraverse(drinks.map(_.strDrinkThumb), cocktailDbClient.getImage)
     } yield {
       images.toSeq.map { case (name, image) =>
         val drink = drinks.find(_.strDrinkThumb.contains(name)).get
@@ -32,6 +32,6 @@ class CocktailsDataService(cassandraConnector: CassandraConnector) extends Futur
   }
 
   private def getAllCocktails(): Future[Seq[Drink]] = {
-    batchTraverse(alphabet, CocktailDbClient.searchByFirstLetter).map(_.values.toSeq.flatten.distinct)
+    batchTraverse(alphabet, cocktailDbClient.searchByFirstLetter).map(_.values.toSeq.flatten.distinct)
   }
 }

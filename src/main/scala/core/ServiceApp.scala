@@ -1,14 +1,18 @@
 package core
 
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
-import cocktail.CocktailsDataService
+import cocktail.{CocktailDbClient, CocktailsDataService, TokenReLoader, TokenState}
 import com.twitter.finagle.http.Request
 import com.twitter.finatra.http.request.ContentType
 import com.twitter.finatra.http.routing.HttpRouter
 import com.twitter.finatra.http.{Controller, HttpServer}
 import com.twitter.util.Future
 import db.{CassandraConnector, CocktailImage}
+import zio.clock.Clock
+import zio.Runtime
+import zio.internal.PlatformLive
 
 object ServiceApp extends HttpServer {
   override val defaultHttpPort: String = ":8080"
@@ -26,8 +30,19 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
       cache.get(name, name => super.get(name))
     }
   }
-  private val cocktailsHandler = new CocktailHandler(cassandraConnector)
-  scheduledExecutor.schedule(new DataActivity(new CocktailsDataService(cassandraConnector)).update, 1L, TimeUnit.HOURS)
+  private val cocktailDbClient = new CocktailDbClient(new AtomicReference[TokenState])
+  private val cocktailsHandler = new CocktailHandler(cassandraConnector, cocktailDbClient)
+  private val tokenReLoader = new TokenReLoader(cocktailDbClient)
+
+  private val runtime = Runtime(
+    new Clock {
+      override val clock: Clock.Service[Any] = Clock.Live.clock
+    },
+    PlatformLive.Default
+  )
+  runtime.unsafeRunAsync_(tokenReLoader.reload())
+
+  scheduledExecutor.schedule(new DataActivity(new CocktailsDataService(cassandraConnector, cocktailDbClient)).update, 1L, TimeUnit.MINUTES)
 
   get("/search") { request: Request =>
     cocktailsHandler.search(request.getParam("query")).map { body =>
