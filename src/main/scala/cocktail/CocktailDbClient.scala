@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicReference
 import com.twitter.io.Buf
 import com.twitter.util.Future
 import core.HttpsClient
-import core.Models.{Drink, Result}
+import service.Models.{Drink, Result}
 import io.circe.parser.decode
 
 // https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita

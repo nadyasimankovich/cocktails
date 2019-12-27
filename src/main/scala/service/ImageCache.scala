@@ -1,4 +1,4 @@
-package core
+package service
 
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import com.twitter.util.Future

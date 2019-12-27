@@ -2,7 +2,7 @@ package cocktail
 
 import com.twitter.util.Future
 import core.FutureHelper
-import core.Models.Drink
+import service.Models.Drink
 import db.{CassandraConnector, CocktailImage}
 
 class CocktailsDataService(cassandraConnector: CassandraConnector, cocktailDbClient: CocktailDbClient) extends FutureHelper {

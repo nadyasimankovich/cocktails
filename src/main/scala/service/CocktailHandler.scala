@@ -1,8 +1,9 @@
-package core
+package service
 
 import cocktail.CocktailDbClient
 import com.twitter.util.Future
-import core.Models._
+import core.FutureHelper
+import Models._
 import db.{CassandraConnector, CocktailImage}
 import io.circe.Json
 import io.circe.generic.auto._

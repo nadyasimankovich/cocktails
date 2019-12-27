@@ -1,4 +1,4 @@
-package core
+package service
 
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
@@ -10,8 +10,8 @@ import com.twitter.finatra.http.routing.HttpRouter
 import com.twitter.finatra.http.{Controller, HttpServer}
 import com.twitter.util.Future
 import db.{CassandraConnector, CocktailImage}
-import zio.clock.Clock
 import zio.Runtime
+import zio.clock.Clock
 import zio.internal.PlatformLive
 
 object ServiceApp extends HttpServer {

@@ -1,4 +1,4 @@
-package core
+package service
 
 import io.circe.generic.semiauto.{deriveDecoder, deriveEncoder}
 import io.circe.{Decoder, Encoder}
