@@ -9,26 +9,11 @@ import core.HttpsClient
 import io.circe.Json
 import service.Models.Drink
 import io.circe.parser.decode
-import io.circe.parser.parse
 
 // https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
 class CocktailDbClient(token: AtomicReference[TokenState]) {
 
   private val serviceSearch = new HttpsClient("www.thecocktaildb.com")
-
-  private def parseIngredients(json: Json): Set[String] = {
-    (1 to 15).flatMap { i =>
-      json.\\(s"strIngredient$i").flatMap(_.asString)
-    }.toSet
-  }
-
-  private def contentToJson(response: String): List[Json]  = {
-    decode[Json](response) match {
-      case Right(value) =>
-        value.\\("drinks").head.asArray.getOrElse(List.empty).toList
-      case Left(ex) => throw ex
-    }
-  }
 
   def search(query: String): Future[Seq[Drink]] = {
     for {
@@ -39,13 +24,7 @@ class CocktailDbClient(token: AtomicReference[TokenState]) {
           headers = Map("Authorization" -> s"Bearer ${token.get().token}")
         )
     } yield {
-      contentToJson(result.contentString).map { json =>
-        json.as[Drink] match {
-          case Right(drink) =>
-            drink.copy(ingredients = Some(parseIngredients(json)))
-          case Left(ex) => throw ex
-        }
-      }
+      parseDrinks(result.contentString)
     }
   }
 
@@ -58,12 +37,7 @@ class CocktailDbClient(token: AtomicReference[TokenState]) {
           headers = Map("Authorization" -> s"Bearer ${token.get().token}")
         )
     } yield {
-      contentToJson(result.contentString).map { json =>
-        json.as[Drink] match {
-          case Right(drink) => drink.copy(ingredients = Some(parseIngredients(json)))
-          case Left(ex) => throw ex
-        }
-      }
+      parseDrinks(result.contentString)
     }
   }
 
@@ -85,6 +59,30 @@ class CocktailDbClient(token: AtomicReference[TokenState]) {
     } yield {
       println(s"reloadToken: $newToken")
       token.set(newToken)
+    }
+  }
+
+  private def parseDrinks(result: String): List[Drink] = {
+    def parseIngredients(json: Json): Set[String] = {
+      (1 to 15).flatMap { i =>
+        json.\\(s"strIngredient$i").flatMap(_.asString)
+      }.toSet
+    }
+
+    def contentToJson(response: String): List[Json]  = {
+      decode[Json](response) match {
+        case Right(value) =>
+          value.\\("drinks").head.asArray.getOrElse(List.empty).toList
+        case Left(ex) => throw ex
+      }
+    }
+
+    contentToJson(result).map { json =>
+      json.as[Drink] match {
+        case Right(drink) =>
+          drink.copy(ingredients = Some(parseIngredients(json)))
+        case Left(ex) => throw ex
+      }
     }
   }
 }
