@@ -55,8 +55,7 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
 
       case (null, ing) =>
         cocktailsHandler.searchByIngredients(decode(ing)).map { body =>
-          if (body.isEmpty) response.notFound
-          else response.ok(body.get.noSpaces).contentTypeJson()
+          response.ok(body.noSpaces).contentTypeJson()
         }
 
       case _ => response.badRequest("query or ingredients param not found")

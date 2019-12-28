@@ -50,7 +50,7 @@ class IngredientsRepository(cassandraConnector: CassandraConnector) {
           Some(
             statement.bind()
               .setString("name", ingredient.name)
-              .setString("cocktails", (result.cocktails ++ ingredient.cocktail).mkString(","))
+              .setString("cocktails", (result.cocktails + ingredient.cocktail).mkString(","))
           )
         } else None
       }

@@ -50,11 +50,25 @@ class CocktailHandler(
     }
   }
 
-  def searchByIngredients(query: String): Future[Option[Json]] = {
-    ingredientsRepository.get(query).map { res =>
-      res.map { i =>
-        i.cocktails.mkString(",").asJson
-      }
+  def searchByIngredients(query: String): Future[Json] = {
+    for {
+      ingredients <- ingredientsRepository.get(query)
+      cocktails <- if (ingredients.isDefined)
+        batchTraverse(ingredients.get.cocktails.toSeq, catalogRepository.get).map(_.values).map(_.flatten)
+      else Future.value(Seq.empty)
+    } yield {
+      val response = MyResult(
+        drinks = cocktails.map { i =>
+          CocktailInfo(
+            name = i.name,
+            ingredients = i.ingredients.mkString(","),
+            recipe = i.recipe,
+            link = imageLink(i.name)
+          )
+        }.toSeq
+      )
+
+      response.asJsonObject.asJson
     }
   }
 
