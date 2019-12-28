@@ -24,7 +24,7 @@ class CocktailDbClient(token: AtomicReference[TokenState]) {
           headers = Map("Authorization" -> s"Bearer ${token.get().token}")
         )
     } yield {
-      parseDrinks(result.contentString)
+      parseDrinks(result.contentString.toLowerCase)
     }
   }
 
@@ -37,7 +37,7 @@ class CocktailDbClient(token: AtomicReference[TokenState]) {
           headers = Map("Authorization" -> s"Bearer ${token.get().token}")
         )
     } yield {
-      parseDrinks(result.contentString)
+      parseDrinks(result.contentString.toLowerCase)
     }
   }
 
@@ -65,7 +65,7 @@ class CocktailDbClient(token: AtomicReference[TokenState]) {
   private def parseDrinks(result: String): List[Drink] = {
     def parseIngredients(json: Json): Set[String] = {
       (1 to 15).flatMap { i =>
-        json.\\(s"strIngredient$i").flatMap(_.asString)
+        json.\\(s"stringredient$i").flatMap(_.asString)
       }.toSet
     }
 

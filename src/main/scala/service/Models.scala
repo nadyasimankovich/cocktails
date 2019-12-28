@@ -5,7 +5,7 @@ import io.circe.{Decoder, Encoder}
 
 object Models {
   case class CocktailInfo(name: String, ingredients: String, recipe: String, link: String)
-  case class Drink(strDrink: String, ingredients: Option[Set[String]], strInstructions: String, strDrinkThumb: String)
+  case class Drink(strdrink: String, ingredients: Option[Set[String]], strinstructions: String, strdrinkthumb: String)
   case class MyResult(drinks: Seq[CocktailInfo])
 
   implicit val cocktailDecoder: Decoder[CocktailInfo] = deriveDecoder
