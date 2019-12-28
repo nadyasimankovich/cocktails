@@ -23,6 +23,7 @@ class CocktailHandler(cassandraConnector: CassandraConnector, cocktailDbClient: 
       }
       _ <- batchTraverse(images.map { case (drink, image) => CocktailImage(
         name = drink.strDrink.toLowerCase,
+        ingredients = drink.ingredients.getOrElse(Set.empty).mkString(", "),
         recipe = drink.strInstructions,
         image = image
       )
@@ -32,6 +33,7 @@ class CocktailHandler(cassandraConnector: CassandraConnector, cocktailDbClient: 
         drinks = images.map { case (drink, _) =>
           CocktailInfo(
             name = drink.strDrink,
+            ingredients = drink.ingredients.getOrElse(Set.empty).mkString(", "),
             recipe = drink.strInstructions,
             link = imageLink(drink.strDrink)
           )
@@ -47,6 +49,7 @@ class CocktailHandler(cassandraConnector: CassandraConnector, cocktailDbClient: 
       res.map { i =>
         CocktailInfo(
           name = i.name,
+          ingredients = i.ingredients,
           recipe = i.recipe,
           link = imageLink(i.name)
         ).asJsonObject.asJson

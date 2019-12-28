@@ -18,20 +18,20 @@ class CassandraConnector() {
 
   private val insertQuery =
     """
-      |insert into cocktails.catalog (name, recipe, image, ts)
-      |values (?, ? , ?, ?)
+      |insert into cocktails.catalog (name, ingredients, recipe, image, ts)
+      |values (?, ?, ? , ?, ?)
       |""".stripMargin
 
   private val updateQuery =
     """
       |update cocktails.catalog
-      |set recipe = ?, image = ?, ts = ?
+      |set ingredients = ?, recipe = ?, image = ?, ts = ?
       |where name = ?
       |""".stripMargin
 
   private val getQuery =
     """
-      |select name, recipe, image, ts
+      |select name, ingredients, recipe, image, ts
       |from cocktails.catalog
       |where name = ?
       |""".stripMargin
@@ -47,6 +47,7 @@ class CassandraConnector() {
       } yield {
         statement.bind()
           .setString("name", cocktail.name)
+          .setString("ingredients", cocktail.ingredients)
           .setString("recipe", cocktail.recipe)
           .setBytes("image", ByteBuffer.wrap(cocktail.image))
           .setLong("ts", cocktail.ts)
@@ -58,6 +59,7 @@ class CassandraConnector() {
         statement <- updateStatement
       } yield {
         statement.bind()
+          .setString("ingredients", cocktail.ingredients)
           .setString("recipe", cocktail.recipe)
           .setBytes("image", ByteBuffer.wrap(cocktail.image))
           .setLong("ts", cocktail.ts)
@@ -82,6 +84,7 @@ class CassandraConnector() {
       if (row == null) None
       else Some(CocktailImage(
         name = row.getString("name"),
+        ingredients = row.getString("ingredients"),
         recipe = row.getString("recipe"),
         image = row.getBytes("image").array(),
         ts = row.getLong("ts")

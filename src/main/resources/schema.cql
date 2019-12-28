@@ -2,4 +2,4 @@ create keyspace cocktails WITH replication = {'class': 'SimpleStrategy', 'replic
 
 use cocktails;
 
-CREATE TABLE catalog (name text PRIMARY KEY, recipe text, image blob, ts bigint);
+CREATE TABLE catalog (name text, ingredients text, recipe text, image blob, ts bigint, PRIMARY KEY(name, ingredients));

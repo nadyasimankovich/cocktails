@@ -24,6 +24,7 @@ class CocktailsDataService(cassandraConnector: CassandraConnector, cocktailDbCli
         val drink = drinks.find(_.strDrinkThumb.contains(name)).get
         CocktailImage(
           name = drink.strDrink.toLowerCase,
+          ingredients = drink.ingredients.getOrElse(Set.empty).mkString(", "),
           recipe = drink.strInstructions,
           image = image
         )
