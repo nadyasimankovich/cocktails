@@ -44,7 +44,10 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
   )
   runtime.unsafeRunAsync_(tokenReLoader.reload())
 
-  scheduledExecutor.schedule(new DataActivity(new CocktailsDataService(catalogRepository, ingredientsRepository, cocktailDbClient)).update, 1L, TimeUnit.MINUTES)
+  scheduledExecutor.schedule(
+    new DataActivity(new CocktailsDataService(catalogRepository, ingredientsRepository, cocktailDbClient)).update,
+    1L, TimeUnit.HOURS
+  )
 
   get("/search") { request: Request =>
     (request.getParam("query"), request.getParam("ingredients")) match {
@@ -54,7 +57,7 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
         }
 
       case (null, ing) =>
-        cocktailsHandler.searchByIngredients(decode(ing)).map { body =>
+        cocktailsHandler.searchByIngredients(decode(ing).split(",")).map { body =>
           response.ok(body.noSpaces).contentTypeJson()
         }
 
@@ -70,7 +73,7 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
   }
 
   get("/images/:name") { request: Request =>
-    cocktailsHandler.getImage(decode(request.path)).map { body =>
+    cocktailsHandler.getImage(decode(request.getParam("name"))).map { body =>
       if (body.isEmpty) response.notFound
       else response.ok(body).contentType(ContentType.JPEG.contentTypeName)
     }

@@ -50,12 +50,12 @@ class CocktailHandler(
     }
   }
 
-  def searchByIngredients(query: String): Future[Json] = {
+  def searchByIngredients(query: Seq[String]): Future[Json] = {
     for {
-      ingredients <- ingredientsRepository.get(query)
-      cocktails <- if (ingredients.isDefined)
-        batchTraverse(ingredients.get.cocktails.toSeq, catalogRepository.get).map(_.values).map(_.flatten)
-      else Future.value(Seq.empty)
+      cocktailsName <- batchTraverse(query, ingredientsRepository.get)
+        .map(_.values.toSeq.flatten.flatMap(_.cocktails).toSet)
+      cocktails <- batchTraverse(cocktailsName.toSeq, catalogRepository.get)
+        .map(_.values.flatten)
     } yield {
       val response = MyResult(
         drinks = cocktails.map { i =>
