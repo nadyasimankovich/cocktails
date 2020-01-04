@@ -3,12 +3,14 @@ package core
 import com.twitter.finagle.http.{Request, RequestBuilder, Response}
 import com.twitter.finagle.{Http, Service}
 import com.twitter.util.Future
+import com.twitter.util.Duration
 import com.twitter.finagle.http.Method
 
 class HttpsClient(host: String) {
   private val service: Service[Request, Response] = Http
     .client
     .withTls(host)
+    .withRequestTimeout(Duration.fromSeconds(1))
     .newService(s"$host:443")
 
   def sendGet(
