@@ -1,44 +1,41 @@
 package db
 
-import com.datastax.driver.core.{BoundStatement, PreparedStatement}
+import com.datastax.driver.core.BoundStatement
 import com.twitter.util.Future
 
-class IngredientsRepository(cassandraConnector: CassandraConnector) {
+class IngredientsRepository(cassandraConnector: CassandraConnector)
+  extends CassandraBaseRepository[IngredientLink, Ingredient](cassandraConnector) {
   import cassandraConnector._
   import core.FutureUtils._
 
-  private val insertQuery =
+  protected val insertQuery: String =
     """
       |insert into cocktails.ingredients (name, cocktails)
       |values (?, ?)
       |""".stripMargin
 
-  private val updateQuery =
+  protected val updateQuery: String =
     """
       |update cocktails.ingredients
       |set cocktails = ?
       |where name = ?
       |""".stripMargin
 
-  private val getQuery =
+  protected val getQuery: String =
     """
       |select name, cocktails
       |from cocktails.ingredients
       |where name = ?
       |""".stripMargin
 
-  private val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala)
-  private val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala)
-  private val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala)
-
-  def upsert(ingredient: IngredientLink): Future[Unit] = {
+  override def upsert(value: IngredientLink): Future[Unit] = {
     def insert: Future[BoundStatement] = {
       for {
         statement <- insertStatement
       } yield {
         statement.bind()
-          .setString("name", ingredient.name)
-          .setString("cocktails", ingredient.cocktail)
+          .setString("name", value.name)
+          .setString("cocktails", value.cocktail)
       }
     }
 
@@ -46,29 +43,29 @@ class IngredientsRepository(cassandraConnector: CassandraConnector) {
       for {
         statement <- updateStatement
       } yield {
-        if (!result.cocktails.contains(ingredient.cocktail)) {
+        if (!result.cocktails.contains(value.cocktail)) {
           Some(
             statement.bind()
-              .setString("name", ingredient.name)
-              .setString("cocktails", (result.cocktails + ingredient.cocktail).mkString(","))
+              .setString("name", value.name)
+              .setString("cocktails", (result.cocktails + value.cocktail).mkString(","))
           )
         } else None
       }
     }
 
     for {
-      result <- get(ingredient.name)
+      result <- get(value.name)
       bounded <- if (result.isDefined) update(result.get) else insert.map(Some(_))
       _ <- if (bounded.isDefined) session.flatMap(_.executeAsync(bounded.get).asScala) else Future.value()
     } yield ()
   }
 
-  def get(name: String): Future[Option[Ingredient]] = {
-    println(s"CassandraConnector: $name")
+  override def get(key: String): Future[Option[Ingredient]] = {
+    println(s"CassandraConnector: $key")
 
     for {
       statement <- getStatement
-      row <- session.flatMap(_.executeAsync(statement.bind(name)).asScala).map(_.one())
+      row <- session.flatMap(_.executeAsync(statement.bind(key)).asScala).map(_.one())
     } yield {
       if (row == null) None
       else Some(Ingredient(

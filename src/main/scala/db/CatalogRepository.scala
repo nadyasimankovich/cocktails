@@ -2,38 +2,36 @@ package db
 
 import java.nio.ByteBuffer
 
-import com.datastax.driver.core.{BoundStatement, PreparedStatement}
+import com.datastax.driver.core.BoundStatement
 import com.twitter.util.Future
 
-class CatalogRepository(cassandraConnector: CassandraConnector) {
+class CatalogRepository(cassandraConnector: CassandraConnector)
+  extends CassandraBaseRepository[CocktailImage, CocktailImage](cassandraConnector) {
+
   import cassandraConnector._
   import core.FutureUtils._
 
-  private val insertQuery =
+  protected val insertQuery: String =
     """
       |insert into cocktails.catalog (name, ingredients, recipe, image, ts)
       |values (?, ?, ? , ?, ?)
       |""".stripMargin
 
-  private val updateQuery =
+  protected val updateQuery: String =
     """
       |update cocktails.catalog
       |set ingredients = ?, recipe = ?, image = ?, ts = ?
       |where name = ?
       |""".stripMargin
 
-  private val getQuery =
+  protected val getQuery: String =
     """
       |select name, ingredients, recipe, image, ts
       |from cocktails.catalog
       |where name = ?
       |""".stripMargin
 
-  private val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala)
-  private val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala)
-  private val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala)
-
-  def upsert(cocktail: CocktailImage): Future[Unit] = {
+  override def upsert(cocktail: CocktailImage): Future[Unit] = {
     def insert: Future[BoundStatement] = {
       for {
         statement <- insertStatement
@@ -67,7 +65,7 @@ class CatalogRepository(cassandraConnector: CassandraConnector) {
     } yield ()
   }
 
-  def get(name: String): Future[Option[CocktailImage]] = {
+  override def get(name: String): Future[Option[CocktailImage]] = {
     println(s"CassandraConnector: $name")
 
     for {
