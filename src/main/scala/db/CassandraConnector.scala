@@ -12,6 +12,9 @@ class CassandraConnector() {
     .setConnectionsPerHost(HostDistance.LOCAL, 1, 2)
     .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
     .setCoreConnectionsPerHost(HostDistance.LOCAL, 2)
+    .setMaxConnectionsPerHost(HostDistance.LOCAL, 10)
+    .setPoolTimeoutMillis(1000)
+    .setMaxQueueSize(100)
 
   private val socketOptions: SocketOptions = new SocketOptions()
     .setConnectTimeoutMillis(1000)
