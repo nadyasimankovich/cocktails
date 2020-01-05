@@ -16,27 +16,23 @@ class CocktailsDataService(
     for {
       images <- getAllImages()
       _ <- batchTraverse(images, catalogRepository.upsert)
-      _ <- batchTraverse(
-        images.flatMap(cocktailToIngredientLink),
-        ingredientsRepository.upsert
-      )
+      _ <- batchTraverse(images.flatMap(cocktailToIngredientLink), ingredientsRepository.upsert)
     } yield ()
   }
 
   private def getAllImages(): Future[Seq[CocktailImage]] = {
     for {
       drinks <- getAllCocktails()
-      images <- batchTraverse(drinks.map(_.strdrinkthumb), cocktailDbClient.getImage)
+      images <- batchTraverse(drinks, drinks.map(_.strdrinkthumb), cocktailDbClient.getImage)
     } yield {
-      images.toSeq.map { case (name, image) =>
-        val drink = drinks.find(_.strdrinkthumb.contains(name)).get
+      images.map { case (drink, image) =>
         CocktailImage(
           name = drink.strdrink,
           ingredients = drink.ingredients.getOrElse(Set.empty),
           recipe = drink.strinstructions,
           image = image
         )
-      }
+      }.toSeq
     }
   }
 

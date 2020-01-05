@@ -20,11 +20,7 @@ class CocktailHandler(
   def search(query: String): Future[Json] = {
     for {
       drinks <- cocktailDbClient.search(query).map(_.distinct.toSeq)
-      images <- batchTraverse(drinks.map(_.strdrinkthumb), cocktailDbClient.getImage).map { result =>
-        result.map { case (name, res) =>
-          drinks.find(_.strdrinkthumb.contains(name)).get -> res
-        }
-      }
+      images <- batchTraverse(drinks, drinks.map(_.strdrinkthumb), cocktailDbClient.getImage)
       imagesDb = images.map { case (drink, image) => CocktailImage(
         name = drink.strdrink,
         ingredients = drink.ingredients.getOrElse(Set.empty),
