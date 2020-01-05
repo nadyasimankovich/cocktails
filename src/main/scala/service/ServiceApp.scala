@@ -4,7 +4,9 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{ScheduledThreadPoolExecutor, TimeUnit}
 
 import cocktail.{CocktailDbClient, CocktailsDataService, TokenReLoader, TokenState}
+import com.codahale.metrics.jmx.JmxReporter
 import com.twitter.finagle.http.Request
+import com.twitter.finagle.metrics.MetricsStatsReceiver
 import com.twitter.finatra.http.request.ContentType
 import com.twitter.finatra.http.routing.HttpRouter
 import com.twitter.finatra.http.{Controller, HttpServer}
@@ -18,10 +20,14 @@ object ServiceApp extends HttpServer {
   override val defaultHttpPort: String = ":8080"
 
   private val serviceController = new ServiceController(new ScheduledThreadPoolExecutor(1))
+  private val reporter: JmxReporter = JmxReporter.forRegistry(MetricsStatsReceiver.metrics).build()
+
   override def configureHttp(router: HttpRouter): Unit = {
     router.
       add(serviceController)
   }
+
+  reporter.start()
 }
 
 class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends Controller {

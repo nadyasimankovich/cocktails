@@ -29,7 +29,10 @@ lazy val cocktails = (project in file("."))
       "com.datastax.cassandra" % "cassandra-driver-core" % "3.8.0",
       "com.github.blemale" %% "scaffeine" % "3.1.0" % "compile",
 
-      "dev.zio" %% "zio" % zioVersion
+      "dev.zio" %% "zio" % zioVersion,
+
+      "com.github.rlazoti" %% "finagle-metrics" % "0.0.12",
+      "io.dropwizard.metrics" % "metrics-jmx" % "4.1.2"
     )
   )
   .settings(

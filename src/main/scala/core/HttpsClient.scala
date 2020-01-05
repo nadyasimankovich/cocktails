@@ -11,6 +11,8 @@ class HttpsClient(host: String) {
     .client
     .withTls(host)
     .withRequestTimeout(Duration.fromSeconds(1))
+    .withSession
+    .acquisitionTimeout(Duration.fromMilliseconds(100))
     .newService(s"$host:443")
 
   def sendGet(
