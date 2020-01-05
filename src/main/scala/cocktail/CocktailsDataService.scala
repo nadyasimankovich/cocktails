@@ -23,13 +23,13 @@ class CocktailsDataService(
   private def getAllImages(): Future[Seq[CocktailImage]] = {
     for {
       drinks <- getAllCocktails()
-      images <- batchTraverse(drinks, drinks.map(_.strdrinkthumb), cocktailDbClient.getImage)
+      images <- batchTraverse(drinks, drinks.map(_.strDrinkThumb), cocktailDbClient.getImage)
     } yield {
       images.map { case (drink, image) =>
         CocktailImage(
-          name = drink.strdrink,
-          ingredients = drink.ingredients.getOrElse(Set.empty),
-          recipe = drink.strinstructions,
+          name = drink.strDrink.toLowerCase,
+          ingredients = drink.ingredients.getOrElse(Set.empty).map(_.toLowerCase),
+          recipe = drink.strInstructions,
           image = image
         )
       }.toSeq

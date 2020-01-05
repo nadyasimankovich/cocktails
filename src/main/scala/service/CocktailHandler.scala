@@ -20,11 +20,11 @@ class CocktailHandler(
   def search(query: String): Future[Json] = {
     for {
       drinks <- cocktailDbClient.search(query).map(_.distinct.toSeq)
-      images <- batchTraverse(drinks, drinks.map(_.strdrinkthumb), cocktailDbClient.getImage)
+      images <- batchTraverse(drinks, drinks.map(_.strDrinkThumb), cocktailDbClient.getImage)
       imagesDb = images.map { case (drink, image) => CocktailImage(
-        name = drink.strdrink,
-        ingredients = drink.ingredients.getOrElse(Set.empty),
-        recipe = drink.strinstructions,
+        name = drink.strDrink.toLowerCase,
+        ingredients = drink.ingredients.getOrElse(Set.empty).map(_.toLowerCase),
+        recipe = drink.strInstructions,
         image = image
       )
       }.toSeq
@@ -34,10 +34,10 @@ class CocktailHandler(
       val response = MyResult(
         drinks = images.map { case (drink, _) =>
           CocktailInfo(
-            name = drink.strdrink,
+            name = drink.strDrink,
             ingredients = drink.ingredients.getOrElse(Set.empty).mkString(","),
-            recipe = drink.strinstructions,
-            link = imageLink(drink.strdrink)
+            recipe = drink.strInstructions,
+            link = imageLink(drink.strDrinkThumb)
           )
         }.toSeq
       )
