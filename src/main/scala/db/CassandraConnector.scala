@@ -13,7 +13,7 @@ class CassandraConnector() {
     .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
     .setCoreConnectionsPerHost(HostDistance.LOCAL, 2)
     .setMaxConnectionsPerHost(HostDistance.LOCAL, 10)
-    .setPoolTimeoutMillis(1000)
+   // .setPoolTimeoutMillis(1000)
     .setMaxQueueSize(100)
 
   private val socketOptions: SocketOptions = new SocketOptions()
@@ -25,7 +25,7 @@ class CassandraConnector() {
     .withoutJMXReporting()
     .addContactPoint("127.0.0.1")
     .withPoolingOptions(poolingOptions)
-    .withSocketOptions(socketOptions)
+   // .withSocketOptions(socketOptions)
     .build
 
   implicit val executor: Executor = Executors.newFixedThreadPool(10)
