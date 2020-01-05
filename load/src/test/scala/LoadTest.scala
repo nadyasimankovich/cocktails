@@ -23,8 +23,8 @@ class LoadTest extends Simulation {
   setUp(
     loadScenario
       .inject(
-        rampUsersPerSec(1) to 100 during 5.minutes,
-        constantUsersPerSec(100) during 5.minutes
+        rampUsersPerSec(1) to 10 during 1.minutes,
+        constantUsersPerSec(10) during 1.minutes
       )
       .protocols(httpConf)
   ).assertions(

@@ -2,7 +2,7 @@ package db
 
 import java.nio.ByteBuffer
 
-import com.datastax.driver.core.BoundStatement
+import com.datastax.driver.core.{BoundStatement, PreparedStatement}
 import com.twitter.util.Future
 
 class CatalogRepository(cassandraConnector: CassandraConnector)
@@ -30,6 +30,10 @@ class CatalogRepository(cassandraConnector: CassandraConnector)
       |from cocktails.catalog
       |where name = ?
       |""".stripMargin
+
+  protected val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala)
+  protected val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala)
+  protected val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala)
 
   override def upsert(cocktail: CocktailImage): Future[Unit] = {
     def insert: Future[BoundStatement] = {

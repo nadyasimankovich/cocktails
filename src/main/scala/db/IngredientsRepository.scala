@@ -1,6 +1,6 @@
 package db
 
-import com.datastax.driver.core.BoundStatement
+import com.datastax.driver.core.{BoundStatement, PreparedStatement}
 import com.twitter.util.Future
 
 class IngredientsRepository(cassandraConnector: CassandraConnector)
@@ -27,6 +27,10 @@ class IngredientsRepository(cassandraConnector: CassandraConnector)
       |from cocktails.ingredients
       |where name = ?
       |""".stripMargin
+
+  protected val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala)
+  protected val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala)
+  protected val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala)
 
   override def upsert(value: IngredientLink): Future[Unit] = {
     def insert: Future[BoundStatement] = {
