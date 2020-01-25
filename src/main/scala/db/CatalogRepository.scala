@@ -24,6 +24,13 @@ class CatalogRepository(cassandraConnector: CassandraConnector)
       |where name = ?
       |""".stripMargin
 
+  protected val addImageQuery: String =
+    """
+      |update cocktails.catalog
+      |set image = ?, ts = ?
+      |where name = ?
+      |""".stripMargin
+
   protected val getQuery: String =
     """
       |select name, ingredients, recipe, image, ts
@@ -33,27 +40,24 @@ class CatalogRepository(cassandraConnector: CassandraConnector)
 
   protected val insertStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(insertQuery).asScala)
   protected val updateStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(updateQuery).asScala)
+  protected val addImageStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(addImageQuery).asScala)
   protected val getStatement: Future[PreparedStatement] = session.flatMap(_.prepareAsync(getQuery).asScala)
 
   override def upsert(cocktail: CocktailImage): Future[Unit] = {
     def insert: Future[BoundStatement] = {
-      for {
-        statement <- insertStatement
-      } yield {
-        statement.bind()
-          .setString("name", cocktail.name)
-          .setString("ingredients", cocktail.ingredients.mkString(","))
-          .setString("recipe", cocktail.recipe)
-          .setBytes("image", ByteBuffer.wrap(cocktail.image))
-          .setLong("ts", cocktail.ts)
+        insertStatement.map {
+          _.bind()
+            .setString("name", cocktail.name)
+            .setString("ingredients", cocktail.ingredients.mkString(","))
+            .setString("recipe", cocktail.recipe)
+            .setBytes("image", ByteBuffer.wrap(cocktail.image))
+            .setLong("ts", cocktail.ts)
+        }
       }
-    }
 
     def update: Future[BoundStatement] = {
-      for {
-        statement <- updateStatement
-      } yield {
-        statement.bind()
+      updateStatement.map {
+        _.bind()
           .setString("ingredients", cocktail.ingredients.mkString(","))
           .setString("recipe", cocktail.recipe)
           .setBytes("image", ByteBuffer.wrap(cocktail.image))
@@ -84,6 +88,22 @@ class CatalogRepository(cassandraConnector: CassandraConnector)
         image = row.getBytes("image").array(),
         ts = row.getLong("ts")
       ))
+    }
+  }
+
+  def addImage(name: String, image: Array[Byte]): Future[Unit] = {
+    get(name).flatMap {
+      case None => Future.exception(new Throwable(s"cocktail with name = $name not found"))
+      case Some(_) =>
+        for {
+          bounded <- addImageStatement.map {
+            _.bind()
+              .setBytes("image", ByteBuffer.wrap(image))
+              .setLong("ts", currentTs)
+              .setString("name", name)
+          }
+          _ <- session.flatMap(_.executeAsync(bounded).asScala)
+        } yield ()
     }
   }
 }

@@ -34,27 +34,21 @@ class IngredientsRepository(cassandraConnector: CassandraConnector)
 
   override def upsert(value: IngredientLink): Future[Unit] = {
     def insert: Future[BoundStatement] = {
-      for {
-        statement <- insertStatement
-      } yield {
-        statement.bind()
+      insertStatement.map {
+        _.bind()
           .setString("name", value.name)
           .setString("cocktails", value.cocktail)
       }
     }
 
     def update(result: Ingredient): Future[Option[BoundStatement]] = {
-      for {
-        statement <- updateStatement
-      } yield {
-        if (!result.cocktails.contains(value.cocktail)) {
-          Some(
-            statement.bind()
+      if (!result.cocktails.contains(value.cocktail)) {
+          updateStatement.map {
+            _.bind()
               .setString("name", value.name)
               .setString("cocktails", (result.cocktails + value.cocktail).mkString(","))
-          )
-        } else None
-      }
+          }.map(i => Some(i))
+      } else Future.value(None)
     }
 
     for {

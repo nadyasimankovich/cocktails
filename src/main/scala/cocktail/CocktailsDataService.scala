@@ -16,7 +16,7 @@ class CocktailsDataService(
     for {
       images <- getAllImages()
       _ <- batchTraverse(images, catalogRepository.upsert)
-      _ <- batchTraverse(images.flatMap(cocktailToIngredientLink), ingredientsRepository.upsert)
+      _ <- batchTraverse(images.flatMap(_.toIngredientLink), ingredientsRepository.upsert)
     } yield ()
   }
 

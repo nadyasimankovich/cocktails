@@ -7,11 +7,12 @@ import cocktail.{CocktailDbClient, CocktailsDataService, TokenReLoader, TokenSta
 import com.codahale.metrics.jmx.JmxReporter
 import com.twitter.finagle.http.Request
 import com.twitter.finagle.metrics.MetricsStatsReceiver
-import com.twitter.finatra.http.request.ContentType
+import com.twitter.finatra.http.request.{ContentType, RequestUtils}
 import com.twitter.finatra.http.routing.HttpRouter
 import com.twitter.finatra.http.{Controller, HttpServer}
 import com.twitter.util.Future
 import db.{CassandraConnector, CatalogRepository, CocktailImage, IngredientsRepository}
+import service.Models.UserCocktailInfo
 import zio.Runtime
 import zio.clock.Clock
 import zio.internal.PlatformLive
@@ -82,6 +83,26 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
     cocktailsHandler.getImage(decode(request.getParam("name"))).map { body =>
       if (body.isEmpty) response.notFound
       else response.ok(body).contentType(ContentType.JPEG.contentTypeName)
+    }
+  }
+
+  put("/images/:name/add") { request: Request =>
+    val name = decode(request.getParam("name"))
+
+    val t = RequestUtils.multiParams(request)
+
+    cocktailsHandler.addImage(name, Array.empty)
+      .onFailure { _ =>
+        response.notFound(s"cocktail $name not found")
+      }
+      .onSuccess { _ =>
+        response.ok(s"image for $name successfully updated")
+      }
+  }
+
+  post("/add") { request: UserCocktailInfo =>
+    cocktailsHandler.addCocktail(request.toDbCocktails).map { _ =>
+      response.ok
     }
   }
 

@@ -29,7 +29,7 @@ class CocktailHandler(
       )
       }.toSeq
       _ <- batchTraverse(imagesDb, catalogRepository.upsert)
-      _ <- batchTraverse(imagesDb.flatMap(cocktailToIngredientLink), ingredientsRepository.upsert)
+      _ <- batchTraverse(imagesDb.flatMap(_.toIngredientLink), ingredientsRepository.upsert)
     } yield {
       val response = MyResult(
         drinks = images.map { case (drink, _) =>
@@ -86,5 +86,17 @@ class CocktailHandler(
       case Some(result) => result.image
       case None => Array.empty
     }
+  }
+
+  def addCocktail(cocktail: CocktailImage): Future[Unit] = {
+    for {
+      _ <- catalogRepository.upsert(cocktail)
+      _ <- batchTraverse(cocktail.toIngredientLink.toSeq, ingredientsRepository.upsert)
+    } yield ()
+  }
+
+  def addImage(name: String, image: Array[Byte]): Future[Unit] = {
+    if (image.isEmpty) Future.exception(new Throwable(s"image is empty"))
+    catalogRepository.addImage(name, image)
   }
 }
