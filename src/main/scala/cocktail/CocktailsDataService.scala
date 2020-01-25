@@ -4,9 +4,10 @@ import com.twitter.util.Future
 import core.FutureHelper
 import service.Models.Drink
 import db._
+import service.ImageCache
 
 class CocktailsDataService(
-  catalogRepository: CatalogRepository,
+  catalogRepository: CatalogRepository with ImageCache,
   ingredientsRepository: IngredientsRepository,
   cocktailDbClient: CocktailDbClient
 ) extends FutureHelper {
@@ -17,7 +18,9 @@ class CocktailsDataService(
       images <- getAllImages()
       _ <- batchTraverse(images, catalogRepository.upsert)
       _ <- batchTraverse(images.flatMap(_.toIngredientLink), ingredientsRepository.upsert)
-    } yield ()
+    } yield {
+      catalogRepository.invalidateAll(images.map(_.name))
+    }
   }
 
   private def getAllImages(): Future[Seq[CocktailImage]] = {

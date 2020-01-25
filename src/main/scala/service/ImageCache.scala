@@ -7,9 +7,13 @@ import db.CocktailImage
 import scala.concurrent.duration._
 
 trait ImageCache {
-  val cache: Cache[String, Future[Option[CocktailImage]]] = Scaffeine()
+  protected val cache: Cache[String, Future[Option[CocktailImage]]] = Scaffeine()
     .recordStats()
     .expireAfterWrite(1.hour)
     .maximumSize(10)
     .build[String, Future[Option[CocktailImage]]]()
+
+  def invalidate(key: String): Unit = cache.invalidate(key)
+
+  def invalidateAll(keys: Seq[String]): Unit = cache.invalidateAll(keys)
 }

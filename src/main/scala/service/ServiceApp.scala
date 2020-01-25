@@ -86,12 +86,12 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
     }
   }
 
+  // curl -X PUT -F image=@photo_2019-12-21_18-30-47.jpg http://localhost:8080/images/test/add
   put("/images/:name/add") { request: Request =>
     val name = decode(request.getParam("name"))
+    val file = RequestUtils.multiParams(request).get("image")
 
-    val t = RequestUtils.multiParams(request)
-
-    cocktailsHandler.addImage(name, Array.empty)
+    cocktailsHandler.addImage(name, file.map(_.data).getOrElse(Array.empty))
       .onFailure { _ =>
         response.notFound(s"cocktail $name not found")
       }

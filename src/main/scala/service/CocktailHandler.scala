@@ -10,7 +10,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 
 class CocktailHandler(
-  catalogRepository: CatalogRepository,
+  catalogRepository: CatalogRepository with ImageCache,
   ingredientsRepository: IngredientsRepository,
   cocktailDbClient: CocktailDbClient
 ) extends FutureHelper {
@@ -31,6 +31,8 @@ class CocktailHandler(
       _ <- batchTraverse(imagesDb, catalogRepository.upsert)
       _ <- batchTraverse(imagesDb.flatMap(_.toIngredientLink), ingredientsRepository.upsert)
     } yield {
+      catalogRepository.invalidateAll(imagesDb.map(_.name))
+
       val response = MyResult(
         drinks = images.map { case (drink, _) =>
           CocktailInfo(
@@ -92,11 +94,15 @@ class CocktailHandler(
     for {
       _ <- catalogRepository.upsert(cocktail)
       _ <- batchTraverse(cocktail.toIngredientLink.toSeq, ingredientsRepository.upsert)
-    } yield ()
+    } yield {
+      catalogRepository.invalidate(cocktail.name)
+    }
   }
 
   def addImage(name: String, image: Array[Byte]): Future[Unit] = {
     if (image.isEmpty) Future.exception(new Throwable(s"image is empty"))
-    catalogRepository.addImage(name, image)
+    else catalogRepository.addImage(name, image).onSuccess { _ =>
+      catalogRepository.invalidate(name)
+    }
   }
 }
