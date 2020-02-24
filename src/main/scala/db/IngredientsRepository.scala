@@ -1,7 +1,9 @@
 package db
 
 import com.datastax.driver.core.{BoundStatement, PreparedStatement}
-import com.twitter.util.Future
+import core._
+
+import scala.concurrent.Future
 
 class IngredientsRepository(cassandraConnector: CassandraConnector)
   extends CassandraBaseRepository[IngredientLink, Ingredient](cassandraConnector) {
@@ -48,13 +50,13 @@ class IngredientsRepository(cassandraConnector: CassandraConnector)
               .setString("name", value.name)
               .setString("cocktails", (result.cocktails + value.cocktail).mkString(","))
           }.map(i => Some(i))
-      } else Future.value(None)
+      } else Future.successful(None)
     }
 
     for {
       result <- get(value.name)
       bounded <- if (result.isDefined) update(result.get) else insert.map(Some(_))
-      _ <- if (bounded.isDefined) session.flatMap(_.executeAsync(bounded.get).asScala) else Future.value()
+      _ <- if (bounded.isDefined) session.flatMap(_.executeAsync(bounded.get).asScala) else Future.successful()
     } yield ()
   }
 

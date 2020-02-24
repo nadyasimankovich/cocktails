@@ -1,6 +1,6 @@
 package core
 
-import com.twitter.util.Future
+import scala.concurrent.Future
 
 trait FutureHelper {
 
@@ -11,9 +11,9 @@ trait FutureHelper {
   ): Future[Map[A, B]] = {
     transformedSeq.zip(initialSeq)
       .grouped(10)
-      .foldLeft(Future.value(Seq.empty[(A, B)])) { case (result, group) =>
+      .foldLeft(Future.successful(Seq.empty[(A, B)])) { case (result, group) =>
       result.flatMap { res =>
-        Future.collect {
+        Future.sequence {
           group.map { case (c, a) =>
             future(c).map { r =>
               a -> r
@@ -28,9 +28,9 @@ trait FutureHelper {
   def batchTraverse[A, B](initialSeq: Seq[A], future: A => Future[B]): Future[Map[A, B]] = {
     initialSeq
       .grouped(10)
-      .foldLeft(Future.value(Seq.empty[(A, B)])) { case (result, group) =>
+      .foldLeft(Future.successful(Seq.empty[(A, B)])) { case (result, group) =>
         result.flatMap { res =>
-          Future.collect {
+          Future.sequence {
             group.map { i =>
               future(i).map { r =>
                 i -> r

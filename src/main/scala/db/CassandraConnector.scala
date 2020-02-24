@@ -4,8 +4,9 @@ import java.util.concurrent.{Executor, Executors}
 
 import com.codahale.metrics.jmx.JmxReporter
 import com.datastax.driver.core.{Cluster, HostDistance, PoolingOptions, Session, SocketOptions}
-import com.twitter.util.Future
 import core.FutureUtils._
+
+import scala.concurrent.Future
 
 class CassandraConnector() {
   private val poolingOptions: PoolingOptions = new PoolingOptions()

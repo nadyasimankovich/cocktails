@@ -3,7 +3,9 @@ package db
 import java.nio.ByteBuffer
 
 import com.datastax.driver.core.{BoundStatement, PreparedStatement}
-import com.twitter.util.Future
+
+import scala.concurrent.Future
+import core._
 
 class CatalogRepository(cassandraConnector: CassandraConnector)
   extends CassandraBaseRepository[CocktailImage, CocktailImage](cassandraConnector) {
@@ -93,7 +95,7 @@ class CatalogRepository(cassandraConnector: CassandraConnector)
 
   def addImage(name: String, image: Array[Byte]): Future[Unit] = {
     get(name).flatMap {
-      case None => Future.exception(new Throwable(s"cocktail with name = $name not found"))
+      case None => Future.failed(new Throwable(s"cocktail with name = $name not found"))
       case Some(_) =>
         for {
           bounded <- addImageStatement.map {

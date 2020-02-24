@@ -2,10 +2,13 @@ package core
 
 import com.twitter.finagle.http.{Request, RequestBuilder, Response}
 import com.twitter.finagle.{Http, Service}
-import com.twitter.util.Future
 import com.twitter.finagle.http.Method
 
+import scala.concurrent.Future
+
 class HttpsClient(host: String) {
+  import core.FutureUtils._
+
   private val service: Service[Request, Response] = Http
     .client
     .withTls(host)
@@ -22,6 +25,6 @@ class HttpsClient(host: String) {
       .addHeaders(headers)
       .build(method, None)
 
-    service(request)
+    service(request).asScala
   }
 }

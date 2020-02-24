@@ -1,9 +1,9 @@
 package service
 
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import com.twitter.util.Future
 import db.CocktailImage
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 trait ImageCache {

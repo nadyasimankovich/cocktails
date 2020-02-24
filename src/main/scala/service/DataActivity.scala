@@ -1,6 +1,7 @@
 package service
 
 import cocktail.CocktailsDataService
+import core._
 
 class DataActivity(cocktailsDataService: CocktailsDataService) {
 

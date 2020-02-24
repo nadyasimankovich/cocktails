@@ -13,8 +13,7 @@ class TokenReLoader(cocktailDbClient: CocktailDbClient) {
 
   def reload(): ZIO[Clock, Throwable, Option[Int]] = {
     ZIO.fromFuture { implicit ec: ExecutionContext =>
-      import core.FutureUtils._
-      cocktailDbClient.reloadToken.asScala
+      cocktailDbClient.reloadToken
     }.repeat(policy)
       .timeout(50.millis)
       .mapError { _ =>

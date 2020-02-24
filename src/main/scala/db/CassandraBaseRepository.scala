@@ -1,7 +1,7 @@
 package db
 
 import com.datastax.driver.core.PreparedStatement
-import com.twitter.util.Future
+import scala.concurrent.Future
 
 abstract class CassandraBaseRepository[A, B](cassandraConnector: CassandraConnector) {
   protected val insertQuery: String

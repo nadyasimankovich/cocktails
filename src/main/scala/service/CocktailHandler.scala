@@ -1,13 +1,15 @@
 package service
 
 import cocktail.CocktailDbClient
-import com.twitter.util.Future
 import core.FutureHelper
 import Models._
 import db._
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
+import core._
+
+import scala.concurrent.Future
 
 class CocktailHandler(
   catalogRepository: CatalogRepository with ImageCache,
@@ -100,9 +102,11 @@ class CocktailHandler(
   }
 
   def addImage(name: String, image: Array[Byte]): Future[Unit] = {
-    if (image.isEmpty) Future.exception(new Throwable(s"image is empty"))
-    else catalogRepository.addImage(name, image).onSuccess { _ =>
-      catalogRepository.invalidate(name)
+    if (image.isEmpty) Future.failed(new Throwable(s"image is empty"))
+    else {
+      for {
+        _ <- catalogRepository.addImage(name, image)
+      } yield catalogRepository.invalidate(name)
     }
   }
 }

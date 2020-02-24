@@ -7,12 +7,15 @@ import cocktail.{CocktailDbClient, CocktailsDataService, TokenReLoader, TokenSta
 import com.twitter.finagle.http.Request
 import com.twitter.finatra.http.Controller
 import com.twitter.finatra.http.request.{ContentType, RequestUtils}
-import com.twitter.util.Future
 import db.{CassandraConnector, CatalogRepository, CocktailImage, IngredientsRepository}
 import service.Models.UserCocktailInfo
 import zio.Runtime
 import zio.clock.Clock
 import zio.internal.PlatformLive
+import core._
+
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends Controller {
   private val cassandraConnector = new CassandraConnector
@@ -74,13 +77,10 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
     val name = decode(request.getParam("name"))
     val file = RequestUtils.multiParams(request).get("image")
 
-    cocktailsHandler.addImage(name, file.map(_.data).getOrElse(Array.empty))
-      .onFailure { _ =>
-        response.notFound(s"cocktail $name not found")
-      }
-      .onSuccess { _ =>
-        response.ok(s"image for $name successfully updated")
-      }
+    cocktailsHandler.addImage(name, file.map(_.data).getOrElse(Array.empty)).onComplete {
+      case Success(_) => response.ok(s"image for $name successfully updated")
+      case Failure(_) => response.notFound(s"cocktail $name not found")
+    }
   }
 
   post("/add") { request: UserCocktailInfo =>

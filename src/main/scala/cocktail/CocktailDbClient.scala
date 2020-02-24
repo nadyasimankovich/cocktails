@@ -4,12 +4,12 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 
 import com.twitter.io.Buf
-import com.twitter.util.Future
 import core.HttpsClient
 import io.circe.Json
 import service.Models.Drink
 import io.circe.parser.decode
-
+import scala.concurrent.Future
+import core._
 // https://www.thecocktaildb.com/api/json/v1/1/search.php?s=margarita
 class CocktailDbClient(token: AtomicReference[TokenState]) {
 
@@ -55,7 +55,7 @@ class CocktailDbClient(token: AtomicReference[TokenState]) {
 
   def reloadToken: Future[Unit] = {
     for {
-      newToken <- Future.value(TokenState(UUID.randomUUID().toString, 600))
+      newToken <- Future.successful(TokenState(UUID.randomUUID().toString, 600))
     } yield {
       println(s"reloadToken: $newToken")
       token.set(newToken)

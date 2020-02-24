@@ -1,10 +1,11 @@
 package cocktail
 
-import com.twitter.util.Future
+import scala.concurrent.Future
 import core.FutureHelper
 import service.Models.Drink
 import db._
 import service.ImageCache
+import core._
 
 class CocktailsDataService(
   catalogRepository: CatalogRepository with ImageCache,

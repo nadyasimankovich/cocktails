@@ -9,21 +9,21 @@ import scala.concurrent.{Future => ScalaFuture, Promise => ScalaPromise}
 
 object FutureUtils {
   implicit class GuavaFuture[A](val f: ListenableFuture[A]) {
-    def asScala(implicit ec: Executor): TwitterFuture[A] = {
-      val promise: TwitterPromise[A] = TwitterPromise[A]
+    def asScala(implicit ec: Executor): ScalaFuture[A] = {
+      val promise: ScalaPromise[A] = ScalaPromise[A]
       val runnable = new Runnable {
         override def run(): Unit =
 
-          if (f.isCancelled) promise.setException(new NoSuchElementException("cancelled"))
+          if (f.isCancelled) promise.failure(new NoSuchElementException("cancelled"))
           else try {
-            promise.setValue(f.get())
+            promise.success(f.get())
           } catch {
-            case ex: Throwable => promise.setException(ex)
+            case ex: Throwable => promise.failure(ex)
           }
       }
       f.addListener(runnable, ec)
 
-      promise
+      promise.future
     }
   }
 
