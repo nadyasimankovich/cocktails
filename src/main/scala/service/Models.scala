@@ -7,8 +7,8 @@ import io.circe.{Decoder, Encoder}
 object Models {
   case class UserCocktailInfo(name: String, ingredients: String, recipe: String){
     def toDbCocktails: CocktailImage = CocktailImage(
-      name = name,
-      ingredients = ingredients.split(",").toSet,
+      name = name.toLowerCase,
+      ingredients = ingredients.toLowerCase.split(",").toSet,
       recipe = recipe,
       image = Array.empty
     )

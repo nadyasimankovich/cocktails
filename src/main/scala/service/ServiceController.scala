@@ -39,7 +39,7 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
 
   scheduledExecutor.schedule(
     new DataActivity(new CocktailsDataService(catalogRepository, ingredientsRepository, cocktailDbClient)).update,
-    2L, TimeUnit.MINUTES
+    1L, TimeUnit.MINUTES
   )
 
   get("/search") { request: Request =>
@@ -77,7 +77,7 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
     val name = decode(request.getParam("name"))
     val file = RequestUtils.multiParams(request).get("image")
 
-    cocktailsHandler.addImage(name, file.map(_.data).getOrElse(Array.empty)).onComplete {
+    cocktailsHandler.addImage(name.toLowerCase, file.map(_.data).getOrElse(Array.empty)).onComplete {
       case Success(_) => response.ok(s"image for $name successfully updated")
       case Failure(_) => response.notFound(s"cocktail $name not found")
     }
