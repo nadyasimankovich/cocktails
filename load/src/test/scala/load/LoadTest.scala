@@ -39,6 +39,7 @@ class LoadTest extends Simulation {
       http("put image").put("images/${name}/add")
         .formUpload("image", "/Users/n.simankovich/IdeaProjects/cocktails/test_image.jpg")
     )
+    .pause(1.seconds)
     .exec(http("check cocktail").get("get").queryParam("name", "${name}"))
     .exec(http("check image").get("images/${name}"))
 

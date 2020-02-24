@@ -39,7 +39,7 @@ class ServiceController(scheduledExecutor: ScheduledThreadPoolExecutor) extends 
 
   scheduledExecutor.schedule(
     new DataActivity(new CocktailsDataService(catalogRepository, ingredientsRepository, cocktailDbClient)).update,
-    1L, TimeUnit.MINUTES
+    10L, TimeUnit.MINUTES
   )
 
   get("/search") { request: Request =>
